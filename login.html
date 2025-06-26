@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册/登录 - 志愿填报助手</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* 全局重置和基础样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --color-primary: #007AFF; /* Apple Blue */
+            --color-secondary: #5AC8FA; /* Lighter Blue */
+            --color-accent: #FF9500; /* Orange Accent */
+            --color-text-dark: #1C1C1E; /* Dark Text */
+            --color-text-light: #8E8E93; /* Light Gray Text */
+            --color-background: #F2F2F7; /* Light Background */
+            --color-card-bg: #FFFFFF; /* Card Background */
+            --color-border: #E5E5EA; /* Border Color */
+            --shadow-light: 0 1px 3px rgba(0, 0, 0, 0.08);
+            --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --shadow-deep: 0 8px 24px rgba(0, 0, 0, 0.15);
+            --border-radius-small: 8px;
+            --border-radius-medium: 12px;
+            --border-radius-large: 16px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background-color: var(--color-background);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            color: var(--color-text-dark);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .auth-container {
+            background: var(--color-card-bg);
+            padding: 50px;
+            border-radius: var(--border-radius-large);
+            box-shadow: var(--shadow-deep);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--color-border);
+        }
+        .auth-container::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: -20px;
+            right: -20px;
+            bottom: -20px;
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+            opacity: 0.1;
+            filter: blur(30px);
+            z-index: 0;
+            border-radius: var(--border-radius-large);
+        }
+        .auth-container > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        h1 {
+            color: var(--color-primary);
+            margin-bottom: 35px;
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .form-group {
+            margin-bottom: 25px;
+            text-align: left;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 700;
+            color: var(--color-text-dark);
+            font-size: 1.1rem;
+        }
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 18px 20px;
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius-medium);
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            background: var(--color-background);
+            color: var(--color-text-dark);
+        }
+        input[type="text"]::placeholder,
+        input[type="password"]::placeholder {
+            color: var(--color-text-light);
+            opacity: 0.8;
+        }
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            background: var(--color-card-bg);
+            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.15);
+        }
+        button {
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            border-radius: var(--border-radius-medium);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 30px;
+            box-shadow: var(--shadow-medium);
+            letter-spacing: 1px;
+        }
+        button:hover {
+            background: #005bb5;
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-deep);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .switch-form {
+            margin-top: 30px;
+            font-size: 1rem;
+            color: var(--color-text-light);
+        }
+        .switch-form a {
+            color: var(--color-primary);
+            text-decoration: none;
+            font-weight: 700;
+            transition: color 0.3s ease;
+        }
+        .switch-form a:hover {
+            color: var(--color-secondary);
+        }
+        .message {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: var(--border-radius-medium);
+            font-weight: 600;
+            display: none;
+            text-align: center;
+            font-size: 1rem;
+            box-shadow: var(--shadow-light);
+        }
+        .message.success {
+            background-color: #D4EDDA; /* Light Green */
+            color: #155724; /* Dark Green */
+            border: 1px solid #C3E6CB;
+        }
+        .message.error {
+            background-color: #F8D7DA; /* Light Red */
+            color: #721C24; /* Dark Red */
+            border: 1px solid #F5C6CB;
+        }
+
+        @media (max-width: 576px) {
+            .auth-container {
+                padding: 30px;
+                border-radius: var(--border-radius-medium);
+            }
+            h1 {
+                font-size: 2rem;
+                margin-bottom: 25px;
+            }
+            .form-group {
+                margin-bottom: 20px;
+            }
+            label {
+                font-size: 1rem;
+            }
+            input[type="text"],
+            input[type="password"] {
+                padding: 15px;
+                font-size: 1rem;
+            }
+            button {
+                padding: 15px;
+                font-size: 1.1rem;
+                margin-top: 25px;
+            }
+            .switch-form {
+                margin-top: 20px;
+                font-size: 0.9rem;
+            }
+            .message {
+                padding: 12px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <h1 id="formTitle">用户登录</h1>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="loginUsername">用户名</label>
+                <input type="text" id="loginUsername" placeholder="请输入用户名" required>
+            </div>
+            <div class="form-group">
+                <label for="loginPassword">密码</label>
+                <input type="password" id="loginPassword" placeholder="请输入密码" required>
+            </div>
+            <button type="submit">登录</button>
+        </form>
+
+        <form id="registerForm" style="display: none;">
+            <div class="form-group">
+                <label for="registerUsername">用户名</label>
+                <input type="text" id="registerUsername" placeholder="请输入用户名" required>
+            </div>
+            <div class="form-group">
+                <label for="registerPassword">密码</label>
+                <input type="password" id="registerPassword" placeholder="请输入密码" required>
+            </div>
+            <div class="form-group">
+                <label for="confirmPassword">确认密码</label>
+                <input type="password" id="confirmPassword" placeholder="请再次输入密码" required>
+            </div>
+            <button type="submit">注册</button>
+        </form>
+
+        <div class="message" id="authMessage"></div>
+
+        <div class="switch-form">
+            <span id="switchText">还没有账号？</span> <a href="#" id="switchLink">立即注册</a>
+        </div>
+    </div>
+
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const formTitle = document.getElementById('formTitle');
+        const switchLink = document.getElementById('switchLink');
+        const switchText = document.getElementById('switchText');
+        const authMessage = document.getElementById('authMessage');
+
+        let isLoginForm = true;
+
+        // 切换表单
+        switchLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            authMessage.style.display = 'none'; // Hide any previous messages
+
+            if (isLoginForm) {
+                formTitle.textContent = '用户注册';
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
+                switchText.textContent = '已有账号？';
+                switchLink.textContent = '立即登录';
+            } else {
+                formTitle.textContent = '用户登录';
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+                switchText.textContent = '还没有账号？';
+                switchLink.textContent = '立即注册';
+            }
+            isLoginForm = !isLoginForm;
+        });
+
+        // 注册逻辑
+        registerForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('registerUsername').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (password !== confirmPassword) {
+                showMessage('error', '两次输入的密码不一致！');
+                return;
+            }
+
+            // 模拟用户存储：在 localStorage 中保存用户
+            const users = JSON.parse(localStorage.getItem('users')) || {};
+            if (users[username]) {
+                showMessage('error', '用户名已存在，请选择其他用户名！');
+                return;
+            }
+
+            users[username] = password;
+            localStorage.setItem('users', JSON.stringify(users));
+            showMessage('success', '注册成功！请登录。');
+
+            // 注册成功后自动切换到登录页面
+            formTitle.textContent = '用户登录';
+            loginForm.style.display = 'block';
+            registerForm.style.display = 'none';
+            switchText.textContent = '还没有账号？';
+            switchLink.textContent = '立即注册';
+            isLoginForm = true;
+        });
+
+        // 登录逻辑
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+
+            const users = JSON.parse(localStorage.getItem('users')) || {};
+
+            if (users[username] && users[username] === password) {
+                // 模拟登录成功：在 localStorage 中设置登录状态
+                localStorage.setItem('loggedInUser', username);
+                showMessage('success', '登录成功！正在跳转...');
+                setTimeout(() => {
+                    window.location.href = 'index.html'; // 跳转到志愿填报页面
+                }, 1000);
+            } else {
+                showMessage('error', '用户名或密码不正确！');
+            }
+        });
+
+        function showMessage(type, message) {
+            authMessage.className = `message ${type}`;
+            authMessage.textContent = message;
+            authMessage.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
