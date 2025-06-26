@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高考志愿填报助手</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1a73e8;
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        select, input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        select:focus, input[type="number"]:focus {
+            border-color: #1a73e8;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+        }
+        .radio-group {
+            margin: 10px 0;
+            display: flex;
+            gap: 20px;
+        }
+        .radio-group label {
+            display: inline-flex;
+            align-items: center;
+            cursor: pointer;
+            font-weight: normal;
+        }
+        .radio-group input[type="radio"] {
+            margin-right: 8px;
+        }
+        button {
+            background-color: #1a73e8;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            display: block;
+            margin: 20px auto;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #1557b0;
+        }
+        #result {
+            margin-top: 30px;
+            padding: 25px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            display: none;
+            background-color: #fafafa;
+        }
+        .school-list {
+            margin-top: 20px;
+        }
+        .school-category {
+            margin-bottom: 30px;
+        }
+        .school-category h3 {
+            color: #1a73e8;
+            border-bottom: 2px solid #1a73e8;
+            padding-bottom: 8px;
+            font-weight: 600;
+        }
+        .school-category h4 {
+            color: #34a853;
+            margin: 15px 0 10px;
+            padding-left: 10px;
+            border-left: 3px solid #34a853;
+        }
+        .school-category p {
+            margin: 5px 0;
+            padding: 8px 15px;
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .tables-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .table-column {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .table-column h3 {
+            margin-top: 0;
+            color: #1a73e8;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        .recommendationTable {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .recommendationTable th {
+            background-color: #1a73e8;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .recommendationTable td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .recommendationTable tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .recommendationTable tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        /* 不同档次的颜色样式 */
+        .category-冲刺 {
+            background-color: #ffebee; /* 浅红色 */
+        }
+        
+        .category-稳妥 {
+            background-color: #e8f5e9; /* 浅绿色 */
+        }
+        
+        .category-保底 {
+            background-color: #e3f2fd; /* 浅蓝色 */
+        }
+        
+        .category-垫底 {
+            background-color: #fff8e1; /* 浅黄色 */
+        }
+        
+        /* 档次单元格样式 */
+        .category-cell {
+            font-weight: 600;
+        }
+        #loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #1a73e8;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .error-message {
+            color: #d93025;
+            background-color: #fce8e6;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            display: none;
+        }
+        .prompt-preview {
+            background-color: #f1f3f4;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            display: none;
+        }
+        .input-hint {
+            display: block;
+            color: #666;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        .input-error {
+            color: #d93025;
+        }
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .secondary-button {
+            background-color: #f1f3f4;
+            color: #1a73e8;
+            border: 1px solid #dadce0;
+        }
+        .secondary-button:hover {
+            background-color: #e8f0fe;
+        }
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .toggle-button {
+            background: none;
+            border: none;
+            color: #1a73e8;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 5px;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>高考志愿填报助手</h1>
+        <div class="form-group">
+            <label for="province">选择省份：</label>
+            <select id="province">
+                <option value="">请选择省份</option>
+                <option value="北京">北京</option>
+                <option value="天津">天津</option>
+                <option value="河北">河北</option>
+                <option value="山西">山西</option>
+                <option value="内蒙古">内蒙古</option>
+                <option value="辽宁">辽宁</option>
+                <option value="吉林">吉林</option>
+                <option value="黑龙江">黑龙江</option>
+                <option value="上海">上海</option>
+                <option value="江苏">江苏</option>
+                <option value="浙江">浙江</option>
+                <option value="安徽">安徽</option>
+                <option value="福建">福建</option>
+                <option value="江西">江西</option>
+                <option value="山东">山东</option>
+                <option value="河南">河南</option>
+                <option value="湖北">湖北</option>
+                <option value="湖南">湖南</option>
+                <option value="广东">广东</option>
+                <option value="广西">广西</option>
+                <option value="海南">海南</option>
+                <option value="重庆">重庆</option>
+                <option value="四川">四川</option>
+                <option value="贵州">贵州</option>
+                <option value="云南">云南</option>
+                <option value="西藏">西藏</option>
+                <option value="陕西">陕西</option>
+                <option value="甘肃">甘肃</option>
+                <option value="青海">青海</option>
+                <option value="宁夏">宁夏</option>
+                <option value="新疆">新疆</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="score">高考分数：</label>
+            <input type="number" id="score" min="0" max="750" placeholder="请输入您的高考分数（0-750）" 
+                   oninput="validateScore(this)" required>
+            <small class="input-hint" id="scoreHint"></small>
+        </div>
+        <div class="form-group">
+            <label>科目类型：</label>
+            <div class="radio-group">
+                <input type="radio" id="history" name="subject" value="历史">
+                <label for="history">历史类</label>
+                <input type="radio" id="physics" name="subject" value="物理">
+                <label for="physics">物理类</label>
+            </div>
+        </div>
+        <div class="button-group">
+            <button onclick="generateRecommendation()">生成推荐</button>
+            <button class="secondary-button" onclick="resetForm()">重置表单</button>
+        </div>
+        
+        <div id="loading">
+            <div class="spinner"></div>
+            <p>正在分析数据，请稍候...</p>
+        </div>
+        
+        <div class="error-message" id="errorMessage"></div>
+
+        <div id="result">
+            <div class="result-header">
+                <h2>推荐院校</h2>
+                <button class="toggle-button" id="toggleResults" onclick="toggleResults()">收起</button>
+            </div>
+            <div class="school-list" id="schoolListContainer">
+                <div class="tables-container">
+                    <div class="table-column">
+                        <h3>省内院校</h3>
+                        <table class="recommendationTable">
+                            <thead>
+                                <tr>
+                                    <th>档次</th>
+                                    <th>院校名称</th>
+                                </tr>
+                            </thead>
+                            <tbody id="provinceTableBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="table-column">
+                        <h3>省外院校</h3>
+                        <table class="recommendationTable">
+                            <thead>
+                                <tr>
+                                    <th>档次</th>
+                                    <th>院校名称</th>
+                                </tr>
+                            </thead>
+                            <tbody id="otherTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 验证分数输入
+        function validateScore(input) {
+            const scoreHint = document.getElementById('scoreHint');
+            const value = parseInt(input.value);
+            
+            if (isNaN(value)) {
+                scoreHint.textContent = "请输入有效的分数";
+                scoreHint.className = "input-hint input-error";
+                return false;
+            } else if (value < 0 || value > 750) {
+                scoreHint.textContent = "分数应在0-750之间";
+                scoreHint.className = "input-hint input-error";
+                return false;
+            } else {
+                scoreHint.textContent = "分数有效";
+                scoreHint.className = "input-hint";
+                return true;
+            }
+        }
+
+        // 重置表单
+        function resetForm() {
+            document.getElementById('province').value = "";
+            document.getElementById('score').value = "";
+            document.querySelectorAll('input[name="subject"]').forEach(radio => {
+                radio.checked = false;
+            });
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('scoreHint').textContent = "";
+        }
+
+        // 切换结果区域显示/隐藏
+        function toggleResults() {
+            const container = document.getElementById('schoolListContainer');
+            const toggleButton = document.getElementById('toggleResults');
+            
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+                toggleButton.textContent = '收起';
+            } else {
+                container.style.display = 'none';
+                toggleButton.textContent = '展开';
+            }
+        }
+
+        // 生成提示词（不显示预览）
+        function updatePromptPreview() {
+            const province = document.getElementById('province').value;
+            const score = document.getElementById('score').value;
+            const subjectType = document.querySelector('input[name="subject"]:checked')?.value;
+            
+            if (!province || !score || !subjectType) {
+                return null;
+            }
+            
+            return `我是一名来自${province}的考生，高考分数${score}分，选择了${subjectType}类科目。请帮我推荐适合的大学，分为冲刺、稳妥、保底和垫底四个档次，并注明是否为省内院校。`;
+        }
+
+        async function generateRecommendation() {
+            const province = document.getElementById('province').value;
+            const score = document.getElementById('score').value;
+            const subjectType = document.querySelector('input[name="subject"]:checked')?.value;
+            const errorMessage = document.getElementById('errorMessage');
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+
+            // 重置显示状态
+            errorMessage.style.display = 'none';
+            result.style.display = 'none';
+
+            if (!province || !score || !subjectType) {
+                errorMessage.textContent = '请填写完整信息！';
+                errorMessage.style.display = 'block';
+                return;
+            }
+
+            // 获取提示词
+            const prompt = updatePromptPreview();
+            if (!prompt) {
+                errorMessage.textContent = '无法生成有效的提示词，请检查输入信息！';
+                errorMessage.style.display = 'block';
+                loading.style.display = 'none';
+                return;
+            }
+
+            // 显示加载状态
+            loading.style.display = 'block';
+
+            try {
+                const response = await fetch('https://api.stepfun.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer 2t3XMscenzeoYALr4n7ZNPUJS0nMCzhshXKfMOURNDGlPlTjEH1mtdIOK11xtkf8U'
+                    },
+                    body: JSON.stringify({
+                        model: "step-1-256k",
+                        messages: [{
+                            role: "user",
+                            content: prompt
+                        }],
+                        temperature: 0.7,
+                        max_tokens: 2000
+                    })
+                });
+
+                // 隐藏加载状态
+                loading.style.display = 'none';
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error?.message || '服务器响应错误');
+                }
+
+                const data = await response.json();
+                if (data.choices && data.choices[0]) {
+                    const result = data.choices[0].message.content;
+                    processAndDisplayResults(result);
+                } else {
+                    throw new Error('API返回数据格式不正确');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                errorMessage.textContent = `获取推荐失败: ${error.message || '请稍后重试'}`;
+                errorMessage.style.display = 'block';
+                loading.style.display = 'none';
+            }
+        }
+
+        function processAndDisplayResults(result) {
+            // 显示结果区域
+            document.getElementById('result').style.display = 'block';
+
+            // 获取表格主体
+            const provinceTableBody = document.getElementById('provinceTableBody');
+            const otherTableBody = document.getElementById('otherTableBody');
+            
+            // 清空现有内容
+            provinceTableBody.innerHTML = '';
+            otherTableBody.innerHTML = '';
+
+            // 将API返回的文本按行分割并处理
+            const lines = result.split('\n');
+            let currentCategory = '';
+            let currentRegion = '';
+
+            for (const line of lines) {
+                const trimmedLine = line.trim();
+                if (!trimmedLine) continue;
+                
+                // 检测地区
+                if (trimmedLine.includes('省内院校') || trimmedLine.match(/省内大学|本省院校|本省大学/i)) {
+                    currentRegion = '省内';
+                    continue;
+                }
+                if (trimmedLine.includes('省外院校') || trimmedLine.match(/省外大学|外省院校|外省大学/i)) {
+                    currentRegion = '省外';
+                    continue;
+                }
+                
+                // 检测档次
+                if (trimmedLine.includes('冲刺') || trimmedLine.match(/冲刺|冲击/i)) {
+                    currentCategory = '冲刺';
+                    continue;
+                }
+                if (trimmedLine.includes('稳妥') || trimmedLine.match(/稳妥|稳定/i)) {
+                    currentCategory = '稳妥';
+                    continue;
+                }
+                if (trimmedLine.includes('保底') || trimmedLine.match(/保底|保障/i)) {
+                    currentCategory = '保底';
+                    continue;
+                }
+                if (trimmedLine.includes('垫底') || trimmedLine.match(/垫底|保守/i)) {
+                    currentCategory = '垫底';
+                    continue;
+                }
+                
+                // 添加学校到相应的表格
+                if (currentRegion && currentCategory && trimmedLine) {
+                    const row = document.createElement('tr');
+                    // 添加档次对应的类名
+                    row.classList.add(`category-${currentCategory}`);
+                    
+                    const categoryCell = document.createElement('td');
+                    categoryCell.textContent = currentCategory;
+                    categoryCell.classList.add('category-cell');
+                    row.appendChild(categoryCell);
+                    
+                    const schoolCell = document.createElement('td');
+                    schoolCell.textContent = trimmedLine;
+                    row.appendChild(schoolCell);
+                    
+                    if (currentRegion === '省内') {
+                        provinceTableBody.appendChild(row);
+                    } else {
+                        otherTableBody.appendChild(row);
+                    }
+                }
+            }
+            
+            // 如果没有找到省内院校，显示提示信息
+            if (provinceTableBody.childElementCount === 0) {
+                const row = document.createElement('tr');
+                const cell = document.createElement('td');
+                cell.colSpan = 2;
+                cell.textContent = '未找到省内院校推荐';
+                row.appendChild(cell);
+                provinceTableBody.appendChild(row);
+            }
+            
+            // 如果没有找到省外院校，显示提示信息
+            if (otherTableBody.childElementCount === 0) {
+                const row = document.createElement('tr');
+                const cell = document.createElement('td');
+                cell.colSpan = 2;
+                cell.textContent = '未找到省外院校推荐';
+                row.appendChild(cell);
+                otherTableBody.appendChild(row);
+            }
+        }
+    </script>
+</body>
+</html>
