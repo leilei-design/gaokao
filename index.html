@@ -258,9 +258,6 @@
                 flex-direction: column; /* 小屏幕下垂直堆叠 */
             }
         }
-            flex: 1;
-            justify-content: center;
-        }
 
         .radio-option:hover {
             border-color: var(--color-primary);
@@ -595,7 +592,7 @@
     <div class="container">
         <header class="header">
             <h1>🎓 高考志愿填报智能推荐系统</h1>
-            <p>基于大数据与AI，为您规划未来</p>
+            <p>基于大数据，为您规划未来</p>
             <button id="logoutBtn">退出登录</button>
         </header>
  
@@ -643,6 +640,11 @@
                     <label for="score">高考分数</label>
                     <input type="number" id="score" name="score" class="form-control" placeholder="请输入您的高考分数" min="0" max="750" required>
                 </div>
+
+                <div class="form-group">
+                    <label for="rank">高考位次</label>
+                    <input type="number" id="rank" name="rank" class="form-control" placeholder="请输入您的高考位次（全省排名）" min="1" required>
+                </div>
  
                 <div class="form-group">
                     <label>选考科目类别</label>
@@ -670,7 +672,7 @@
         <div class="loading" id="loading">
             <div class="spinner"></div>
             <h3>正在为您智能分析...</h3>
-            <p>基于海量数据和AI模型，请稍候片刻</p>
+            <p>基于海量数据，请稍候片刻</p>
         </div>
  
         <div class="results" id="results">
@@ -692,9 +694,9 @@
         });
 
         const API_CONFIG = {
-            url: 'https://api.siliconflow.cn/v1/chat/completions',
-            token: 'sk-krdbzigcszscdiazaqdlctqvvnsofncjwggowvewbpjieioo',
-            model: 'Qwen/Qwen3-32B'
+            url: 'https://api.hunyuan.cloud.tencent.com/v1/chat/completions',
+            token: 'sk-DmvpwXYJ40QC1ds9VlN0FKt3Wm7MmD3D67is3GH43eDXONUh',
+            model: 'hunyuan-turbos-latest'
         };
  
         const form = document.getElementById('volunteerForm');
@@ -721,6 +723,7 @@
             const formData = new FormData(form);
             const province = formData.get('province');
             const score = formData.get('score');
+            const rank = formData.get('rank'); // 获取高考位次
             const category = formData.get('category');
  
             showLoading();
@@ -728,9 +731,9 @@
             loading.scrollIntoView({ behavior: 'smooth' });
  
             try {
-                const prompt = generatePrompt(province, score, category);
+                const prompt = generatePrompt(province, score, rank, category); // 传递位次
                 const recommendation = await getAIRecommendation(prompt);
-                displayResults(recommendation, { province, score, category });
+                displayResults(recommendation, { province, score, rank, category }); // 传递位次
                 
             } catch (error) {
                 showError('分析过程中出现错误，请稍后重试。错误信息：' + error.message);
@@ -738,38 +741,40 @@
         });
  
         // [优化] 更新AI提示词，要求提供更丰富的JSON结构
-        function generatePrompt(province, score, category) {
+        function generatePrompt(province, score, rank, category) { // 接收位次参数
             return `请作为高考志愿填报专家，为以下考生提供专业的院校推荐：
  
 考生信息：
 - 所在省份：${province}
 - 高考分数：${score}分
+- 高考位次：${rank}名
 - 选考类别：${category}
  
 请严格按照以下要求和JSON格式输出，不要添加任何额外的解释或说明文字：
-1. 根据分数，将推荐院校分为"冲刺院校"、"稳妥院校"、"保底院校"、"垫底院校"四个层次。
+1. 根据分数和位次，将推荐院校分为"冲刺院校"、"稳妥院校"、"保底院校"、"垫底院校"四个层次。
 2. 在每个层次内，再分为"省内"和"省外"两个类别。
 3. 每个类别推荐3-5所院校。
-4. 对每所院校，提供名称(name)和一句简要说明(description)，说明内容应包含院校特色或优势专业。
+4. 对每所院校，提供名称(name)、一句简要说明(description)，说明内容应包含院校特色或优势专业，以及2024年普通类录取最低位次(min_rank_2024)。如果无法获取，请填"N/A"。
  
 输出格式 (必须是纯JSON):
 {
   "冲刺院校": {
     "省内": [
-      {"name": "院校A", "description": "该校是...，其王牌专业是..."},
-      {"name": "院校B", "description": "以...闻名，适合对...感兴趣的考生"}
+      {"name": "院校A", "description": "该校是...，其王牌专业是...","min_rank_2024": 12345},
+      {"name": "院校B", "description": "以...闻名，适合对...感兴趣的考生","min_rank_2024": 23456}
     ],
     "省外": [
-      {"name": "院校C", "description": "位于...，是...领域的强校"},
-      {"name": "院校D", "description": "位于，...等学科实力突出"}
+      {"name": "院校C", "description": "位于...，是...领域的强校","min_rank_2024": 34567},
+      {"name": "院校D", "description": "位于，...等学科实力突出","min_rank_2024": 45678}
     ]
   },
   "稳妥院校": { ... },
   "保底院校": { ... },
   "垫底院校": { ... }
 }
-
-请确保推荐的院校真实存在，并且符合该省份${category}考生的近年录取情况。`;
+ 
+请确保推荐的院校真实存在，并且符合该省份${category}考生2024年录取情况。`;
+            return promptText.replace(/\s+/g, ' ').trim();
         }
  
         async function getAIRecommendation(prompt) {
@@ -782,11 +787,18 @@
                 },
                 body: JSON.stringify({
                     model: API_CONFIG.model,
-                    messages: [{ role: 'user', content: prompt }],
-                    temperature: 0.5,
-                    max_tokens: 4000,
-                    // [新增] 强制使用JSON输出模式
-                    response_format: { type: "json_object" }
+                    messages: [
+                        {
+                            role: 'system',
+                            content: 'You are a helpful assistant.'
+                        },
+                        {
+                            role: 'user',
+                            content: prompt
+                        }
+                    ],
+                    stream: true,
+                    stream_options: {"include_usage": true}
                 })
             });
  
@@ -795,13 +807,56 @@
                 throw new Error(`API请求失败: ${response.status} ${response.statusText}. 响应体: ${errorBody}`);
             }
  
-            const data = await response.json();
-            
-            if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-                throw new Error('API返回数据格式错误');
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+            let fullContent = '';
+            let buffer = '';
+ 
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+ 
+                buffer += decoder.decode(value, { stream: true });
+ 
+                // Process each line
+                const lines = buffer.split('\n');
+                buffer = lines.pop(); // Keep the last (potentially incomplete) line in the buffer
+ 
+                for (const line of lines) {
+                    if (line.startsWith('data:')) {
+                        try {
+                            const jsonString = line.substring(5).trim();
+                            if (jsonString === '[DONE]') {
+                                continue;
+                            }
+                            const chunk = JSON.parse(jsonString);
+                            if (chunk.choices && chunk.choices[0] && chunk.choices[0].delta && chunk.choices[0].delta.content) {
+                                fullContent += chunk.choices[0].delta.content;
+                            }
+                        } catch (e) {
+                            console.warn('Failed to parse JSON chunk:', line, e);
+                        }
+                    }
+                }
+            }
+            // Ensure any remaining buffer content is processed if it's a complete line
+            if (buffer.startsWith('data:')) {
+                try {
+                    const jsonString = buffer.substring(5).trim();
+                    if (jsonString !== '[DONE]') {
+                        const chunk = JSON.parse(jsonString);
+                        if (chunk.choices && chunk.choices[0] && chunk.choices[0].delta && chunk.choices[0].delta.content) {
+                            fullContent += chunk.choices[0].delta.content;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Failed to parse final JSON chunk:', buffer, e);
+                }
             }
  
-            return data.choices[0].message.content;
+            // 移除Markdown代码块标记
+            fullContent = fullContent.replace(/^```json\s*\n|\n\s*```$/g, '');
+            return fullContent;
         }
         
         // [重构] 结果展示函数，布局更清晰
@@ -811,13 +866,13 @@
                 const data = JSON.parse(recommendation);
                 const content = document.getElementById('recommendationContent');
                 content.innerHTML = ''; // 清空旧内容
-
+ 
                 // 1. 创建结果概要和重试按钮
                 const resultsHeader = document.createElement('div');
                 resultsHeader.className = 'results-header';
                 resultsHeader.innerHTML = `
                     <div class="results-header-info">
-                        <p>为 <span>${userInfo.province}</span> <span>${userInfo.category}</span> <span>${userInfo.score}分</span> 考生的推荐结果</p>
+                        <p>为 <span>${userInfo.province}</span> <span>${userInfo.category}</span> <span>${userInfo.score}分</span> (位次: <span>${userInfo.rank}</span>) 考生的推荐结果</p>
                     </div>
                     <button class="retry-btn">🔄 重新分析</button>
                 `;
@@ -840,7 +895,7 @@
                 categories.forEach(category => {
                     const categoryData = data[category.key];
                     if (!categoryData) return;
-
+ 
                     const categoryCard = document.createElement('div');
                     categoryCard.className = 'category-card';
                     
@@ -853,7 +908,7 @@
                     
                     const localSchools = categoryData['省内'] || [];
                     const externalSchools = categoryData['省外'] || [];
-
+ 
                     if (localSchools.length > 0 || externalSchools.length > 0) {
                         cardContent += `<div class="schools-container">
                             <div class="local-schools">
@@ -870,12 +925,12 @@
                     if (localSchools.length === 0 && externalSchools.length === 0) {
                         cardContent += `<p class="no-data">暂无此分类下的院校推荐</p>`;
                     }
-
+ 
                     cardContent += `</div>`;
                     categoryCard.innerHTML = cardContent;
                     content.appendChild(categoryCard);
                 });
-
+ 
                 hideLoading();
                 inputForm.style.display = 'none'; // 隐藏表单
                 results.style.display = 'block';
@@ -894,8 +949,9 @@
                 <table class="school-table">
                     <thead>
                         <tr>
-                            <th style="width: 30%;">院校名称</th>
-                            <th>简要说明</th>
+                            <th style="width: 25%;">院校名称</th>
+                            <th style="width: 55%;">简要说明</th>
+                            <th style="width: 20%;">2024最低位次</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -905,13 +961,14 @@
                     <tr>
                         <td class="school-name" data-label="院校名称">${school.name || 'N/A'}</td>
                         <td class="school-desc" data-label="简要说明">${school.description || '暂无说明'}</td>
+                        <td data-label="2024最低位次">${school.min_rank_2024 || 'N/A'}</td>
                     </tr>
                 `;
             });
             tableHTML += `</tbody></table>`;
             return tableHTML;
         }
-
+ 
         function showLoading() {
             submitBtn.disabled = true;
             inputForm.style.display = 'none'; // 隐藏表单
